@@ -1,0 +1,4 @@
+/backend/node_modules
+/tyre-management-frontend/node_modules
+# Keep environment variables out of version control
+/backend/.env

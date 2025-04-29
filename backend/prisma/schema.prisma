@@ -1,0 +1,140 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Stock {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  description  String
+  lifespan     Int? // Optional lifespan in days
+  inStock      Int // Amount in stock
+  deleteStatus Boolean      @default(false)
+  price        Float
+  orderItems   OrderItems[] // Changed to use explicit relation model
+  type         String // Type of stock (e.g., tyre, alloywheel, gum, etc.)
+  imageUrl     String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Customer {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  customerId    String     @unique @default("c001") // Auto-generated (we'll handle this in the service)
+  name          String
+  email         String     @unique
+  password      String
+  contactNumber String
+  deleteStatus  Boolean    @default(false)
+  payments      Payment[]
+  orders        Order[]
+  feedbacks     Feedback[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Payment {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerName  String
+  customerEmail String
+  contactNumber String
+  paidAmount    Float
+  status        String   @default("pending") // pending, completed, invalid
+  deleteStatus  Boolean  @default(false)
+  paymentType   String // cash, debit card, credit card
+  paidDate      DateTime @default(now())
+  customerId    String   @db.ObjectId
+  customer      Customer @relation(fields: [customerId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Employee {
+  id            String            @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId    String            @unique @default("e001") // Auto-generated (we'll handle this in the service)
+  name          String
+  nic           String            @unique
+  address       String
+  contactNumber String
+  role          String // e.g., admin, manager, staff
+  password      String
+  email         String            @default("darksparrow156+10@gmail.com")
+  documents     EmployeeDocument?
+  leaves        EmployeeLeave[]
+  deleteStatus  Boolean           @default(false)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model EmployeeDocument {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  nicFrontImage    String
+  nicBackImage     String
+  licenseImage     String? // Optional
+  birthCertificate String
+  employeeId       String   @unique @db.ObjectId
+  employee         Employee @relation(fields: [employeeId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model EmployeeLeave {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  startDate  DateTime
+  endDate    DateTime
+  status     String   @default("pending") // pending, accepted, rejected
+  reason     String
+  employeeId String   @db.ObjectId
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Order {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  customerId   String       @db.ObjectId
+  customer     Customer     @relation(fields: [customerId], references: [id])
+  address      String
+  status       String       @default("pending") // pending, completed, cancelled
+  totalBill    Float
+  orderItems   OrderItems[] // Changed to use explicit relation model
+  deleteStatys Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+// New explicit relation model for Order-Stock many-to-many relationship
+model OrderItems {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String   @db.ObjectId
+  order     Order    @relation(fields: [orderId], references: [id])
+  stockId   String   @db.ObjectId
+  stock     Stock    @relation(fields: [stockId], references: [id])
+  quantity  Int      @default(1)
+  price     Float // Price at time of order
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([orderId, stockId])
+}
+
+model Feedback {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerId String   @db.ObjectId
+  customer   Customer @relation(fields: [customerId], references: [id])
+  type       String
+  numOfStars Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
