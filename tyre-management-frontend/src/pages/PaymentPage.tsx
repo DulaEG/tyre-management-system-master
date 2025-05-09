@@ -100,7 +100,8 @@ const PaymentPage = () => {
                 placeholder="Enter quantity"
                 value={quantity}
                 onChange={(e) => setQuantity(parseInt(e.target.value))}
-                className="bg-gray-700 text-white border-gray-600"
+                className="bg-gray-700 text-white border-black
+                -600"
                 min="1"
               />
             </div>
